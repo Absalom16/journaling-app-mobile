@@ -1,7 +1,8 @@
 import React, { useState, useContext } from "react";
-import { View, TextInput, Button, StyleSheet } from "react-native";
+import { View, TextInput, Button, StyleSheet, TouchableOpacity, Text } from "react-native";
 import { AuthContext } from "../../context/AuthContext";
 import axios from "axios";
+import { API_URL } from "@env";
 
 const SettingsScreen = ({ navigation }) => {
   const { user, logout } = useContext(AuthContext);
@@ -9,14 +10,28 @@ const SettingsScreen = ({ navigation }) => {
   const [password, setPassword] = useState("");
 
   const updateProfile = async () => {
-    await axios.put(
-      "http://192.168.100.123:3000/api/profile",
-      { username, password },
-      {
-        headers: { Authorization: `Bearer ${user.token}` },
+    try {
+      const response = await axios.put(
+        `${API_URL}/profile`,
+        { username, password },
+        {
+          headers: { Authorization: `Bearer ${user.token}` },
+        }
+      );
+
+      console.log(response.data);
+
+      alert("Profile updated!");
+    } catch (error) {
+      console.log(error.response.data);
+      if (
+        error.response &&
+        error.response.data &&
+        error.response.data.message
+      ) {
+        alert(error.response.data.message);
       }
-    );
-    alert("Profile updated!");
+    }
   };
 
   const handleLogout = () => {
@@ -39,8 +54,12 @@ const SettingsScreen = ({ navigation }) => {
         style={styles.input}
         secureTextEntry
       />
-      <Button title="Update Profile" onPress={updateProfile} />
-      <Button title="Logout" onPress={handleLogout} />
+      <TouchableOpacity style={styles.updateButton} onPress={updateProfile}>
+        <Text style={styles.updateButtonText}>Update Profile</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+        <Text style={styles.logoutButtonText}>Logout</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -56,6 +75,28 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 12,
     padding: 8,
+  },
+  updateButton: {
+    backgroundColor: "lightblue",
+    padding: 15,
+    borderRadius: 5,
+    marginVertical: 10,  // Added margin to separate buttons
+  },
+  updateButtonText: {
+    color: "white",
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  logoutButton: {
+    backgroundColor: "red",
+    padding: 15,
+    borderRadius: 5,
+    marginVertical: 10,  // Added margin to separate buttons
+  },
+  logoutButtonText: {
+    color: "white",
+    fontWeight: "bold",
+    textAlign: "center",
   },
 });
 

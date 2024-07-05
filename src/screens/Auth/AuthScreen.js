@@ -1,5 +1,5 @@
 import React, { useState, useContext } from "react";
-import { View, TextInput, Button, StyleSheet } from "react-native";
+import { View, TextInput, Button, StyleSheet, Text } from "react-native";
 import { AuthContext } from "../../context/AuthContext";
 
 const AuthScreen = ({ navigation }) => {
@@ -10,15 +10,27 @@ const AuthScreen = ({ navigation }) => {
 
   const handleAuth = () => {
     if (isLogin) {
-      login(username, password);
+      login(username, password, (response) => {
+        if (response.error) {
+          alert(response.error);
+        }
+      });
+      if (user) {
+        navigation.replace("Main");
+      }
     } else {
-      register(username, password);
+      register(username, password, (response) => {
+        if (response.error) {
+          alert(response.error);
+        }
+      });
+      setIsLogin(true);
     }
-    navigation.replace("Main");
   };
 
   return (
     <View style={styles.container}>
+      <Text style={styles.title}>{isLogin ? "Login" : "Register"}</Text>
       <TextInput
         placeholder="Username"
         value={username}
@@ -32,11 +44,15 @@ const AuthScreen = ({ navigation }) => {
         style={styles.input}
         secureTextEntry
       />
-      <Button title={isLogin ? "Login" : "Register"} onPress={handleAuth} />
-      <Button
-        title={`Switch to ${isLogin ? "Register" : "Login"}`}
-        onPress={() => setIsLogin(!isLogin)}
-      />
+      <View style={styles.buttonContainer}>
+        <Button title={isLogin ? "Login" : "Register"} onPress={handleAuth} />
+      </View>
+      <View style={styles.buttonContainer}>
+        <Button
+          title={`Switch to ${isLogin ? "Register" : "Login"}`}
+          onPress={() => setIsLogin(!isLogin)}
+        />
+      </View>
     </View>
   );
 };
@@ -47,12 +63,21 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: 16,
   },
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 24,
+    textAlign: "center",
+  },
   input: {
     height: 40,
     borderColor: "gray",
     borderWidth: 1,
     marginBottom: 12,
     padding: 8,
+  },
+  buttonContainer: {
+    marginVertical: 10,
   },
 });
 
