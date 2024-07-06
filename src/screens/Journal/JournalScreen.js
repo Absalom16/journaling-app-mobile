@@ -52,15 +52,24 @@ const JournalScreen = () => {
   }, [user]);
 
   const addEntry = async () => {
-    const newEntry = { title, content, category, date: new Date() };
-    const response = await axios.post(`${API_URL}/journal/entries`, newEntry, {
-      headers: { Authorization: `Bearer ${user.token}` },
-    });
-    setEntries([...entries, response.data]);
-    setTitle("");
-    setContent("");
-    setCategory("");
-    setModalVisible(false); // Hide the modal
+    try {
+      const newEntry = { title, content, category, date: new Date() };
+      const response = await axios.post(
+        `${API_URL}/journal/entries`,
+        newEntry,
+        {
+          headers: { Authorization: `Bearer ${user.token}` },
+        }
+      );
+
+      setEntries([...entries, response.data]);
+      setTitle("");
+      setContent("");
+      setCategory("");
+      setModalVisible(false); // Hide the modal
+    } catch (error) {
+      alert(error.response.data.error);
+    }
   };
 
   const updateEntry = async () => {
