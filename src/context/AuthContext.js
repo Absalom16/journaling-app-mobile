@@ -14,11 +14,16 @@ export const AuthProvider = ({ children }) => {
         password,
       });
       if (response.data.user) {
-        setUser(response.data);
+        setUser(response.data); // Update user context
+        callback({}); // Call callback with no error
+      } else {
+        callback({ error: "Unexpected error during login." });
       }
     } catch (error) {
       if (error.response && error.response.data && error.response.data.error) {
         callback({ error: error.response.data.error });
+      } else {
+        callback({ error: "Unexpected error during login." });
       }
     }
   };
@@ -29,17 +34,21 @@ export const AuthProvider = ({ children }) => {
         username,
         password,
       });
-      if (response.data.user) {
-        setUser(response.data);
-        
+
+      if (response.data) {
+        setUser(response.data); // Update user context
+        callback({}); // Call callback with no error
+      } else {
+        callback({ error: "Unexpected error during registration." });
       }
     } catch (error) {
       if (error.response && error.response.data && error.response.data.error) {
         callback({ error: error.response.data.error });
+      } else {
+        callback({ error: "Unexpected error during registration." });
       }
     }
   };
-
 
   const logout = () => {
     setUser(null);

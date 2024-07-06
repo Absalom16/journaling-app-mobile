@@ -2,14 +2,18 @@ import React, { useState, useEffect, useContext } from "react";
 import {
   View,
   Text,
-  TextInput,
-  Button,
   FlatList,
   StyleSheet,
-  TouchableOpacity,
   ActivityIndicator,
   Modal,
 } from "react-native";
+import {
+  Button,
+  TextInput,
+  IconButton,
+  Dialog,
+  Portal,
+} from "react-native-paper";
 import { AuthContext } from "../../context/AuthContext";
 import axios from "axios";
 import { API_URL } from "@env";
@@ -24,6 +28,8 @@ const JournalScreen = () => {
   const [editingEntry, setEditingEntry] = useState(null);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [entryToDelete, setEntryToDelete] = useState(null);
 
   useEffect(() => {
     const fetchEntries = async () => {
@@ -40,7 +46,9 @@ const JournalScreen = () => {
       }
     };
 
-    fetchEntries();
+    if (user) {
+      fetchEntries();
+    }
   }, [user]);
 
   const addEntry = async () => {
@@ -76,11 +84,20 @@ const JournalScreen = () => {
     setModalVisible(false); // Hide the modal
   };
 
-  const deleteEntry = async (id) => {
-    await axios.delete(`${API_URL}/journal/entries/${id}`, {
-      headers: { Authorization: `Bearer ${user.token}` },
-    });
-    setEntries(entries.filter((entry) => entry.id !== id));
+  const confirmDeleteEntry = (entry) => {
+    setEntryToDelete(entry);
+    setShowDeleteDialog(true);
+  };
+
+  const handleDelete = async () => {
+    if (entryToDelete) {
+      await axios.delete(`${API_URL}/journal/entries/${entryToDelete.id}`, {
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+      setEntries(entries.filter((entry) => entry.id !== entryToDelete.id));
+      setEntryToDelete(null);
+      setShowDeleteDialog(false);
+    }
   };
 
   const startEditing = (entry) => {
@@ -101,32 +118,47 @@ const JournalScreen = () => {
 
   return (
     <View style={styles.container}>
-      <Button title="Add Entry" onPress={() => setModalVisible(true)} />
+      <Button
+        icon="book"
+        mode="contained"
+        onPress={() => {
+          setModalVisible(true);
+          setEditingEntry(null);
+        }}
+      >
+        Add Entry
+      </Button>
       {loading ? (
-        <ActivityIndicator size="large" color="#0000ff" />
+        <ActivityIndicator size="large" color="indigo" />
       ) : (
         <FlatList
           data={entries}
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
             <View style={styles.entry}>
-              <Text style={styles.title}>{item.title}</Text>
-              <Text>{item.category}</Text>
-              <Text>{item.content}</Text>
-              <Text>{new Date(item.date).toLocaleDateString()}</Text>
-              <View style={styles.buttonContainer}>
-                <TouchableOpacity
+              <View style={styles.entryHeader}>
+                <Text style={styles.title}>{item.title}</Text>
+                <Text style={styles.category}>{item.category}</Text>
+              </View>
+              <Text style={styles.content}>{item.content}</Text>
+              <Text style={styles.date}>
+                {new Date(item.date).toLocaleDateString()}
+              </Text>
+              <View style={styles.iconContainer}>
+                <IconButton
+                  icon="pencil"
+                  iconColor="indigo"
+                  mode="contained-tonal"
+                  size={15}
                   onPress={() => startEditing(item)}
-                  style={styles.button}
-                >
-                  <Text style={styles.buttonText}>Edit</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => deleteEntry(item.id)}
-                  style={styles.button}
-                >
-                  <Text style={styles.buttonText}>Delete</Text>
-                </TouchableOpacity>
+                />
+                <IconButton
+                  icon="delete"
+                  iconColor="red"
+                  mode="contained-tonal"
+                  size={15}
+                  onPress={() => confirmDeleteEntry(item)}
+                />
               </View>
             </View>
           )}
@@ -141,33 +173,68 @@ const JournalScreen = () => {
           setModalVisible(!modalVisible);
         }}
       >
-        <View style={styles.modalView}>
-          <TextInput
-            placeholder="Title"
-            value={title}
-            onChangeText={setTitle}
-            style={styles.input}
-          />
-          <RNPickerSelect
-            onValueChange={setCategory}
-            items={categoryItems}
-            value={category}
-            style={pickerSelectStyles}
-            placeholder={{ label: "Select a category", value: null }}
-          />
-          <TextInput
-            placeholder="Content"
-            value={content}
-            onChangeText={setContent}
-            style={styles.input}
-          />
-          <Button
-            title={editingEntry ? "Update Entry" : "Add Entry"}
-            onPress={editingEntry ? updateEntry : addEntry}
-          />
-          <Button title="Cancel" onPress={() => setModalVisible(false)} />
+        <View style={styles.centeredView}>
+          <View style={styles.modalView}>
+            <TextInput
+              placeholder="Title"
+              value={title}
+              onChangeText={setTitle}
+              style={styles.input}
+            />
+            <RNPickerSelect
+              onValueChange={setCategory}
+              items={categoryItems}
+              value={category}
+              style={pickerSelectStyles}
+              placeholder={{ label: "Select a category", value: null }}
+            />
+            <TextInput
+              placeholder="Content"
+              value={content}
+              onChangeText={setContent}
+              style={styles.input}
+            />
+
+            <View style={styles.modalButtonContainer}>
+              <Button
+                icon="pen"
+                mode="contained"
+                onPress={editingEntry ? updateEntry : addEntry}
+                style={styles.modalButton}
+              >
+                {editingEntry ? "Update Entry" : "Add Entry"}
+              </Button>
+              <Button
+                icon="close"
+                mode="contained"
+                onPress={() => setModalVisible(false)}
+                style={styles.modalButton}
+                color="gray"
+              >
+                Cancel
+              </Button>
+            </View>
+          </View>
         </View>
       </Modal>
+
+      <Portal>
+        <Dialog
+          visible={showDeleteDialog}
+          onDismiss={() => setShowDeleteDialog(false)}
+        >
+          <Dialog.Title>Confirm Deletion</Dialog.Title>
+          <Dialog.Content>
+            <Text>Are you sure you want to delete this entry?</Text>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setShowDeleteDialog(false)}>Cancel</Button>
+            <Button onPress={handleDelete} color="red">
+              Delete
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
     </View>
   );
 };
@@ -205,31 +272,48 @@ const styles = StyleSheet.create({
     padding: 12,
     borderBottomWidth: 1,
     borderBottomColor: "gray",
+    marginBottom: 5,
+    marginTop: 5,
+    borderRadius: 5,
+    backgroundColor: "white",
+  },
+  entryHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 6,
   },
   title: {
     fontWeight: "bold",
+    fontSize: 16,
   },
-  buttonContainer: {
+  category: {
+    fontStyle: "italic",
+    fontSize: 14,
+    color: "gray",
+  },
+  content: {
+    marginBottom: 6,
+  },
+  date: {
+    fontSize: 12,
+    color: "gray",
+    marginBottom: 6,
+  },
+  iconContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
+    marginTop: 10,
   },
-  button: {
-    padding: 8,
-    backgroundColor: "lightblue",
-    borderRadius: 4,
-    marginTop: 8,
-  },
-  buttonText: {
-    color: "white",
-    fontWeight: "bold",
+  centeredView: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   modalView: {
-    // flex: 1,
-    justifyContent: "center",
-    // alignItems: "center",
+    width: "90%",
     backgroundColor: "white",
     padding: 20,
-    margin: 20,
     borderRadius: 10,
     shadowColor: "#000",
     shadowOffset: {
@@ -239,6 +323,15 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
+  },
+  modalButtonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 20,
+  },
+  modalButton: {
+    flex: 1,
+    marginHorizontal: 5,
   },
 });
 

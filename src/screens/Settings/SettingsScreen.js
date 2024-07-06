@@ -1,5 +1,6 @@
 import React, { useState, useContext } from "react";
-import { View, TextInput, Button, StyleSheet, TouchableOpacity, Text } from "react-native";
+import { View, StyleSheet } from "react-native";
+import { Button, TextInput } from "react-native-paper";
 import { AuthContext } from "../../context/AuthContext";
 import axios from "axios";
 import { API_URL } from "@env";
@@ -18,8 +19,6 @@ const SettingsScreen = ({ navigation }) => {
           headers: { Authorization: `Bearer ${user.token}` },
         }
       );
-
-      console.log(response.data);
 
       alert("Profile updated!");
     } catch (error) {
@@ -54,12 +53,25 @@ const SettingsScreen = ({ navigation }) => {
         style={styles.input}
         secureTextEntry
       />
-      <TouchableOpacity style={styles.updateButton} onPress={updateProfile}>
-        <Text style={styles.updateButtonText}>Update Profile</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Text style={styles.logoutButtonText}>Logout</Text>
-      </TouchableOpacity>
+      <View style={styles.buttonContainer}>
+        <Button
+          mode="contained"
+          onPress={updateProfile}
+          // style={styles.button}
+          labelStyle={styles.buttonText}
+        >
+          Update Profile
+        </Button>
+        <Button
+          mode="contained"
+          onPress={handleLogout}
+          buttonColor="red"
+          // style={[styles.button, styles.logoutButton]}
+          labelStyle={styles.buttonText}
+        >
+          Logout
+        </Button>
+      </View>
     </View>
   );
 };
@@ -76,27 +88,23 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     padding: 8,
   },
-  updateButton: {
-    backgroundColor: "lightblue",
-    padding: 15,
-    borderRadius: 5,
-    marginVertical: 10,  // Added margin to separate buttons
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 10,
   },
-  updateButtonText: {
+  button: {
+    flex: 1,
+    marginHorizontal: 5,
+    padding: 10,
+    borderRadius: 5,
+  },
+  buttonText: {
     color: "white",
     fontWeight: "bold",
-    textAlign: "center",
   },
   logoutButton: {
     backgroundColor: "red",
-    padding: 15,
-    borderRadius: 5,
-    marginVertical: 10,  // Added margin to separate buttons
-  },
-  logoutButtonText: {
-    color: "white",
-    fontWeight: "bold",
-    textAlign: "center",
   },
 });
 

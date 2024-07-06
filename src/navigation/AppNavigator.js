@@ -3,6 +3,8 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import Ionicons from "react-native-vector-icons/Ionicons";
+import { Provider as PaperProvider } from "react-native-paper";
+import { Avatar } from "react-native-paper";
 
 import AuthScreen from "../screens/Auth/AuthScreen";
 import JournalScreen from "../screens/Journal/JournalScreen";
@@ -29,7 +31,7 @@ function MainTabs() {
 
           return <Ionicons name={iconName} size={size} color={color} />;
         },
-        tabBarActiveTintColor: "blue",
+        tabBarActiveTintColor: "indigo",
         tabBarInactiveTintColor: "gray",
         tabBarLabelStyle: {
           fontSize: 10, // Adjust the font size for the tab bar labels
@@ -52,25 +54,28 @@ function MainTabs() {
 
 function AppNavigator() {
   return (
-    <NavigationContainer>
-      <Stack.Navigator
-        initialRouteName="Auth"
-        screenOptions={{
-          headerTitleAlign: "center",
-        }}
-      >
-        <Stack.Screen
-          name="Auth"
-          component={AuthScreen}
-          options={{ headerTitle: "DailyDiary", headerLeft: () => null }}
-        />
-        <Stack.Screen
-          name="Main"
-          component={MainTabs}
-          options={{ headerTitle: "DailyDiary", headerLeft: () => null }}
-        />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <PaperProvider>
+      <NavigationContainer>
+        <Stack.Navigator
+          initialRouteName="Auth"
+          screenOptions={{
+            headerTitleAlign: "center",
+          }}
+        >
+          <Stack.Screen
+            name="Auth"
+            component={AuthScreen}
+            options={{ headerTitle: "DailyDiary", headerLeft: () => null }}
+          />
+          <Stack.Screen
+            name="Main"
+            component={MainTabs}
+            options={{ headerTitle: "DailyDiary", headerLeft: () => null }}
+          />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </PaperProvider>
+    
   );
 }
 

@@ -1,54 +1,68 @@
 import React, { useState, useEffect, useContext } from "react";
 import { View, Text, StyleSheet, FlatList } from "react-native";
+import { Menu, Button, ActivityIndicator, Provider } from "react-native-paper";
 import { AuthContext } from "../../context/AuthContext";
 import axios from "axios";
 import { API_URL } from "@env";
-import RNPickerSelect from "react-native-picker-select";
 
 const SummaryScreen = () => {
   const { user } = useContext(AuthContext);
   const [summary, setSummary] = useState(null);
   const [filteredEntries, setFilteredEntries] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
-  const [selectedPeriod, setSelectedPeriod] = useState(null); // New state for period
+  const [selectedPeriod, setSelectedPeriod] = useState(null);
 
-  // Fetch summary data based on the selected period
+  const [periodMenuVisible, setPeriodMenuVisible] = useState(false);
+  const [categoryMenuVisible, setCategoryMenuVisible] = useState(false);
+
+  const [loading, setLoading] = useState(false); // Loading state
+
   const fetchSummary = async (period) => {
-    const response = await axios.get(`${API_URL}/summary?period=${period}`, {
-      headers: { Authorization: `Bearer ${user.token}` },
-    });
-
-    setSummary(response.data);
-  };
-
-  // Fetch entries based on the selected category
-  const fetchEntriesByCategory = async (category) => {
-    const response = await axios.get(
-      `${API_URL}/journal/entries?category=${category}`,
-      {
+    setLoading(true); // Start loading
+    try {
+      const response = await axios.get(`${API_URL}/summary?period=${period}`, {
         headers: { Authorization: `Bearer ${user.token}` },
-      }
-    );
-
-    setFilteredEntries(response.data);
+      });
+      setSummary(response.data);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false); // End loading
+    }
   };
 
-  // Handle period change and fetch summary
+  const fetchEntriesByCategory = async (category) => {
+    setLoading(true); // Start loading
+    try {
+      const response = await axios.get(
+        `${API_URL}/journal/entries?category=${category}`,
+        {
+          headers: { Authorization: `Bearer ${user.token}` },
+        }
+      );
+      setFilteredEntries(response.data);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false); // End loading
+    }
+  };
+
   const handlePeriodChange = (period) => {
-    setSelectedPeriod(period);
-    fetchSummary(period); // Fetch the summary for the selected period
+    setSelectedPeriod(period.label);
+    fetchSummary(period.value);
+    setPeriodMenuVisible(false);
   };
 
-  // Handle category change and fetch entries
   const handleCategoryChange = (category) => {
     setSelectedCategory(category);
     setFilteredEntries([]);
     if (category) {
       fetchEntriesByCategory(category);
     }
+    setCategoryMenuVisible(false);
   };
 
-  // Populate period options for the dropdown
   const periodItems = [
     { label: "Daily Summary", value: "daily" },
     { label: "Weekly Summary", value: "weekly" },
@@ -56,49 +70,78 @@ const SummaryScreen = () => {
   ];
 
   return (
-    <View style={styles.container}>
-      <RNPickerSelect
-        onValueChange={handlePeriodChange}
-        items={periodItems}
-        placeholder={{ label: "Select a period", value: null }}
-        style={{
-          inputIOS: styles.pickerInput,
-          inputAndroid: styles.pickerInput,
-        }}
-      />
-      {summary && (
-        <View>
-          <RNPickerSelect
-            onValueChange={handleCategoryChange}
-            items={summary.categories.map((category) => ({
-              label: category,
-              value: category,
-            }))}
-            placeholder={{ label: "Select a category", value: null }}
-            style={{
-              inputIOS: styles.pickerInput,
-              inputAndroid: styles.pickerInput,
-            }}
-          />
+    <Provider>
+      <View style={styles.container}>
+        <View style={styles.buttonContainer}>
+          <Menu
+            visible={periodMenuVisible}
+            onDismiss={() => setPeriodMenuVisible(false)}
+            anchor={
+              <Button
+                mode="outlined"
+                onPress={() => setPeriodMenuVisible(true)}
+              >
+                {selectedPeriod ? selectedPeriod : "Select a period"}
+              </Button>
+            }
+          >
+            {periodItems.map((item) => (
+              <Menu.Item
+                key={item.value}
+                onPress={() => handlePeriodChange(item)}
+                title={item.label}
+              />
+            ))}
+          </Menu>
+          {summary && (
+            <Menu
+              visible={categoryMenuVisible}
+              onDismiss={() => setCategoryMenuVisible(false)}
+              anchor={
+                <Button
+                  mode="outlined"
+                  onPress={() => setCategoryMenuVisible(true)}
+                >
+                  {selectedCategory ? selectedCategory : "Select a category"}
+                </Button>
+              }
+            >
+              {summary.categories.map((category) => (
+                <Menu.Item
+                  key={category}
+                  onPress={() => handleCategoryChange(category)}
+                  title={category}
+                />
+              ))}
+            </Menu>
+          )}
         </View>
-      )}
-      {filteredEntries.length > 0 && (
-        <View style={styles.filteredEntriesContainer}>
-          <FlatList
-            data={filteredEntries}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={({ item }) => (
-              <View style={styles.entry}>
-                <Text style={styles.title}>{item.title}</Text>
-                <Text>{item.content}</Text>
-                <Text>{item.category}</Text>
-                <Text>{new Date(item.date).toLocaleDateString()}</Text>
-              </View>
-            )}
-          />
-        </View>
-      )}
-    </View>
+        {loading ? (
+          <ActivityIndicator animating={true} size="large" color="#6200ee" />
+        ) : (
+          filteredEntries.length > 0 && (
+            <View style={styles.filteredEntriesContainer}>
+              <FlatList
+                data={filteredEntries}
+                keyExtractor={(item) => item.id.toString()}
+                renderItem={({ item }) => (
+                  <View style={styles.entry}>
+                    <View style={styles.entryHeader}>
+                      <Text style={styles.title}>{item.title}</Text>
+                      <Text style={styles.category}>{item.category}</Text>
+                    </View>
+                    <Text style={styles.content}>{item.content}</Text>
+                    <Text style={styles.date}>
+                      {new Date(item.date).toLocaleDateString()}
+                    </Text>
+                  </View>
+                )}
+              />
+            </View>
+          )
+        )}
+      </View>
+    </Provider>
   );
 };
 
@@ -107,11 +150,10 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
   },
-  pickerInput: {
-    padding: 10,
-    backgroundColor: "lightblue",
-    borderRadius: 5,
-    marginVertical: 5,
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 16,
   },
   filteredEntriesContainer: {
     flex: 1,
@@ -121,9 +163,31 @@ const styles = StyleSheet.create({
     padding: 12,
     borderBottomWidth: 1,
     borderBottomColor: "gray",
+    marginBottom: 10,
+    borderRadius: 5,
+    backgroundColor: "white",
+  },
+  entryHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 6,
   },
   title: {
     fontWeight: "bold",
+    fontSize: 16,
+  },
+  category: {
+    fontStyle: "italic",
+    fontSize: 14,
+    color: "gray",
+  },
+  content: {
+    marginBottom: 6,
+  },
+  date: {
+    fontSize: 12,
+    color: "gray",
+    marginBottom: 6,
   },
 });
 
