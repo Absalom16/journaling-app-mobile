@@ -53,7 +53,7 @@ This is a React Native journaling application built with Expo. The app allows us
     ```plaintext
     API_URL=your_api_URL eg http://192.168.100.123:3000/api
     ```
-    Note: use your computer's IP address instead of localhost eg 192.168.100.123
+    Note: use your computer's IP address instead of localhost eg 192.168.100.123.
     To get your IP address, run the following command "ipconfig" and select the "IPv4 Address".
 
     Replace `http://192.168.100.123:3000` with the URL of your backend service.
