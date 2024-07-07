@@ -71,8 +71,8 @@ npm start
 This will open Expo CLI terminal. You can also run the app using the Expo Go app on your mobile device:
 
 1. Open the Expo Go app on your mobile device.
-2. Scan the QR code displayed in the Expo CLI terminal.
-3. Make sure that your computer and mobile device are connected to the same network.
+2. Make sure that your computer and mobile device are connected to the same network.
+3. Scan the QR code displayed in the Expo CLI terminal.
 
 ### Running on a Simulator or Emulator
 

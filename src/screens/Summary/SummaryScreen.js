@@ -4,6 +4,7 @@ import { Menu, Button, ActivityIndicator, Provider } from "react-native-paper";
 import { AuthContext } from "../../context/AuthContext";
 import axios from "axios";
 import { API_URL } from "@env";
+import styles from "./SummaryScreenStyles";
 
 const SummaryScreen = () => {
   const { user } = useContext(AuthContext);
@@ -18,11 +19,13 @@ const SummaryScreen = () => {
   const [loading, setLoading] = useState(false); // Loading state
 
   const fetchSummary = async (period) => {
+    setFilteredEntries([]);
     setLoading(true); // Start loading
     try {
       const response = await axios.get(`${API_URL}/summary?period=${period}`, {
         headers: { Authorization: `Bearer ${user.token}` },
       });
+
       setSummary(response.data);
     } catch (error) {
       console.error(error);
@@ -34,13 +37,11 @@ const SummaryScreen = () => {
   const fetchEntriesByCategory = async (category) => {
     setLoading(true); // Start loading
     try {
-      const response = await axios.get(
-        `${API_URL}/journal/entries?category=${category}`,
-        {
-          headers: { Authorization: `Bearer ${user.token}` },
-        }
+      const entries = summary.entries.filter(
+        (entry) => entry.category == category
       );
-      setFilteredEntries(response.data);
+      console.log(entries);
+      setFilteredEntries(entries);
     } catch (error) {
       console.error(error);
     } finally {
@@ -144,51 +145,5 @@ const SummaryScreen = () => {
     </Provider>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-  },
-  buttonContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 16,
-  },
-  filteredEntriesContainer: {
-    flex: 1,
-    marginTop: 20,
-  },
-  entry: {
-    padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "gray",
-    marginBottom: 10,
-    borderRadius: 5,
-    backgroundColor: "white",
-  },
-  entryHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 6,
-  },
-  title: {
-    fontWeight: "bold",
-    fontSize: 16,
-  },
-  category: {
-    fontStyle: "italic",
-    fontSize: 14,
-    color: "gray",
-  },
-  content: {
-    marginBottom: 6,
-  },
-  date: {
-    fontSize: 12,
-    color: "gray",
-    marginBottom: 6,
-  },
-});
 
 export default SummaryScreen;

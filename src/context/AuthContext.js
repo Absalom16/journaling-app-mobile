@@ -35,8 +35,10 @@ export const AuthProvider = ({ children }) => {
         password,
       });
 
+      console.log(response.data)
+
       if (response.data) {
-        setUser(response.data); // Update user context
+        // setUser(response.data); // Update user context
         callback({}); // Call callback with no error
       } else {
         callback({ error: "Unexpected error during registration." });
